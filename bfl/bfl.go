@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-type BFL struct {
+type Client struct {
 	Key     string
 	BaseURL string
 }
 
-func NewBFL(key string, baseURL string) *BFL {
-	return &BFL{
+func NewClient(key string, baseURL string) *Client {
+	return &Client{
 		Key:     key,
 		BaseURL: baseURL,
 	}
@@ -92,8 +92,8 @@ type AsyncTask interface {
 	GetActionURL(baseURL string) string
 }
 
-func AsyncRequest(client *BFL, url string, inputs AsyncTask) (*AsyncResponse, error) {
-	if client.Key == "" {
+func (c *Client) AsyncRequest(url string, inputs AsyncTask) (*AsyncResponse, error) {
+	if c.Key == "" {
 		return nil, fmt.Errorf("API key is not set")
 	}
 	data, err := json.Marshal(inputs)
@@ -105,7 +105,7 @@ func AsyncRequest(client *BFL, url string, inputs AsyncTask) (*AsyncResponse, er
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Key", client.Key)
+	req.Header.Set("X-Key", c.Key)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func AsyncRequest(client *BFL, url string, inputs AsyncTask) (*AsyncResponse, er
 	}
 }
 
-func GetResult[T Result, D Details](client *BFL, taskID string) (*ResultResponse[T, D], error) {
+func GetResult[T Result, D Details](client *Client, taskID string) (*ResultResponse[T, D], error) {
 	url := fmt.Sprintf("%s/v1/get_result?id=%s", client.BaseURL, taskID)
 	res, err := http.Get(url)
 	if err != nil {
@@ -165,7 +165,7 @@ func GetResult[T Result, D Details](client *BFL, taskID string) (*ResultResponse
 }
 
 // Poll the BFL API for the result of an async task every second.
-func Poll[T Result, D Details](client *BFL, ar *AsyncResponse, verbose bool) (*ResultResponse[T, D], error) {
+func Poll[T Result, D Details](client *Client, ar *AsyncResponse, verbose bool) (*ResultResponse[T, D], error) {
 	sleepTimeSeconds := 1
 	attempts := 0
 	for {

@@ -7,7 +7,7 @@ import (
 
 func TestGenerateDev(t *testing.T) {
 	key := os.Getenv("BFL_API_KEY")
-	client := NewBFL(key, "https://api.bfl.ai")
+	client := NewClient(key, "https://api.bfl.ai")
 	task := &FluxDevGenerate{
 		Prompt:           "A beautiful landscape with a river and mountains",
 		ImagePrompt:      "",
@@ -21,7 +21,7 @@ func TestGenerateDev(t *testing.T) {
 		OutputFormat:     "jpeg",
 	}
 	url := task.GetActionURL(client.BaseURL)
-	ar, err := AsyncRequest(client, url, task)
+	ar, err := client.AsyncRequest(url, task)
 	if err != nil {
 		t.Fatalf("Failed to create async request: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestGenerateDev(t *testing.T) {
 func TestGeneratePro11UltraFinetuned(t *testing.T) {
 	key := os.Getenv("BFL_API_KEY")
 	finetuneID := os.Getenv("TEST_FINETUNE_ID")
-	client := NewBFL(key, "https://api.bfl.ai")
+	client := NewClient(key, "https://api.bfl.ai")
 	task := &FluxPro11UltraFinetunedGenerate{
 		FinetuneID:       finetuneID,
 		FinetuneStrength: 1.1,
@@ -49,7 +49,7 @@ func TestGeneratePro11UltraFinetuned(t *testing.T) {
 		Raw:              false,
 	}
 	url := task.GetActionURL(client.BaseURL)
-	ar, err := AsyncRequest(client, url, task)
+	ar, err := client.AsyncRequest(url, task)
 	if err != nil {
 		t.Fatalf("Failed to create async request: %v", err)
 	}

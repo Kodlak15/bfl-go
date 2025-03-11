@@ -9,7 +9,7 @@ import (
 
 func TestFinetune(t *testing.T) {
 	key := os.Getenv("BFL_API_KEY")
-	client := NewBFL(key, "https://api.bfl.ai")
+	client := NewClient(key, "https://api.bfl.ai")
 	zipFile, err := os.Open("../assets/test-finetune-images.zip")
 	if err != nil {
 		t.Fatal(err.Error())
@@ -32,7 +32,7 @@ func TestFinetune(t *testing.T) {
 		FinetuneType:    FinetuneTypeFull,
 		LoraRank:        32,
 	}
-	ar, err := AsyncRequest(client, task.GetActionURL(client.BaseURL), task)
+	ar, err := client.AsyncRequest(task.GetActionURL(client.BaseURL), task)
 	if err != nil {
 		t.Fatalf("Failed to create async request: %v", err)
 	}

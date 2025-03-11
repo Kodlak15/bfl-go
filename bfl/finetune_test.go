@@ -1,17 +1,15 @@
-package finetune
+package bfl
 
 import (
 	"encoding/base64"
 	"io"
 	"os"
 	"testing"
-
-	"github.com/Kodlak15/bfl"
 )
 
 func TestFinetune(t *testing.T) {
 	key := os.Getenv("BFL_API_KEY")
-	client := bfl.NewBFL(key, "https://api.bfl.ai")
+	client := NewBFL(key, "https://api.bfl.ai")
 	zipFile, err := os.Open("../assets/test-finetune-images.zip")
 	if err != nil {
 		t.Fatal(err.Error())
@@ -22,23 +20,23 @@ func TestFinetune(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	encodedZip := base64.StdEncoding.EncodeToString(zipBytes)
-	task := &bfl.FluxFinetune{
+	task := &FluxFinetune{
 		FileData:        encodedZip,
 		FinetuneComment: "test finetune",
 		TriggerWord:     "TOK",
-		Mode:            bfl.FinetuneModeGeneral,
+		Mode:            FinetuneModeGeneral,
 		Iterations:      100,
 		LearningRate:    0.003,
 		Captioning:      true,
-		Priority:        bfl.FinetunePriorityQuality,
-		FinetuneType:    bfl.FinetuneTypeFull,
+		Priority:        FinetunePriorityQuality,
+		FinetuneType:    FinetuneTypeFull,
 		LoraRank:        32,
 	}
-	ar, err := bfl.AsyncRequest(client, task.GetActionURL(client.BaseURL), task)
+	ar, err := AsyncRequest(client, task.GetActionURL(client.BaseURL), task)
 	if err != nil {
 		t.Fatalf("Failed to create async request: %v", err)
 	}
-	resultResponse, err := bfl.Poll[*bfl.FinetuneResult, *bfl.FinetuneDetails](client, ar, true)
+	resultResponse, err := Poll[*FinetuneResult, *FinetuneDetails](client, ar, true)
 	if err != nil {
 		t.Fatalf("Failed to poll result: %v", err)
 	}

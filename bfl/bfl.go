@@ -164,9 +164,9 @@ func GetResult[T Result, D Details](client *BFL, taskID string) (*ResultResponse
 	}
 }
 
-// Poll the BFL API for the result of an async task every 5 seconds.
+// Poll the BFL API for the result of an async task every second.
 func Poll[T Result, D Details](client *BFL, ar *AsyncResponse, verbose bool) (*ResultResponse[T, D], error) {
-	sleepTimeSeconds := 5
+	sleepTimeSeconds := 1
 	attempts := 0
 	for {
 		res, err := http.Get(ar.PollingURL)
@@ -198,7 +198,9 @@ func Poll[T Result, D Details](client *BFL, ar *AsyncResponse, verbose bool) (*R
 			return nil, fmt.Errorf("status code: %d, body: %s", res.StatusCode, string(body))
 		}
 		if verbose {
-			fmt.Printf("Polling for result... (Wait time: %d seconds)\n", sleepTimeSeconds*attempts)
+			if attempts%10 == 0 {
+				fmt.Printf("Polling for result... (Wait time: %d seconds)\n", sleepTimeSeconds*attempts)
+			}
 		}
 		time.Sleep(time.Duration(sleepTimeSeconds) * time.Second)
 		attempts++

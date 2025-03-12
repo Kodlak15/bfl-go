@@ -1,6 +1,9 @@
 package bfl
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type GenerateResult struct {
 	Prompt    string  `json:"prompt"`
@@ -13,6 +16,25 @@ type GenerateResult struct {
 
 // TODO: unimplemented
 type GenerateDetails struct{}
+
+// An async task for generating an image.
+type GenerateTask interface {
+	AsyncTask
+	GenerateTaskMarker()
+}
+
+// Submit an image generation task and poll for the result.
+func Generate(ctx context.Context, c *Client, task GenerateTask) (*GenerateResult, error) {
+	ar, err := c.AsyncRequest(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+	result, err := Poll[*GenerateResult, *GenerateDetails](ctx, c, ar, true)
+	if err != nil {
+		return nil, err
+	}
+	return result.Result, nil
+}
 
 // Task parameters for generating an image with Flux Pro 1.1 through the BFL API.
 type FluxPro11Generate struct {
@@ -46,6 +68,8 @@ type FluxPro11Generate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxPro11Generate) GenerateTaskMarker() {}
 
 func (flx *FluxPro11Generate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.1", baseURL)
@@ -89,6 +113,8 @@ type FluxProGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxProGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxProGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro", baseURL)
@@ -134,6 +160,8 @@ type FluxDevGenerate struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+func (flx *FluxDevGenerate) GenerateTaskMarker() {}
+
 func (flx *FluxDevGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-dev", baseURL)
 }
@@ -171,6 +199,8 @@ type FluxPro11UltraGenerate struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+func (flx *FluxPro11UltraGenerate) GenerateTaskMarker() {}
+
 func (flx *FluxPro11UltraGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.1-ultra", baseURL)
 }
@@ -206,6 +236,8 @@ type FluxProFillGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxProFillGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxProFillGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-fill", baseURL)
@@ -249,6 +281,8 @@ type FluxProCannyGenerate struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+func (flx *FluxProCannyGenerate) GenerateTaskMarker() {}
+
 func (flx *FluxProCannyGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-canny", baseURL)
 }
@@ -284,6 +318,8 @@ type FluxProDepthGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxProDepthGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxProDepthGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-depth", baseURL)
@@ -330,6 +366,8 @@ type FluxProFinetunedGenerate struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+func (flx *FluxProFinetunedGenerate) GenerateTaskMarker() {}
+
 func (flx *FluxProFinetunedGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-finetuned", baseURL)
 }
@@ -368,6 +406,8 @@ type FluxProDepthFinetunedGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxProDepthFinetunedGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxProDepthFinetunedGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-depth-finetuned", baseURL)
@@ -416,6 +456,8 @@ type FluxProCannyFinetunedGenerate struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+func (flx *FluxProCannyFinetunedGenerate) GenerateTaskMarker() {}
+
 func (flx *FluxProCannyFinetunedGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-canny-finetuned", baseURL)
 }
@@ -456,6 +498,8 @@ type FluxProFillFinetunedGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxProFillFinetunedGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxProFillFinetunedGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.0-fill-finetuned", baseURL)
@@ -498,6 +542,8 @@ type FluxPro11UltraFinetunedGenerate struct {
 	// Optional secret for webhook signature verification.
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
+
+func (flx *FluxPro11UltraFinetunedGenerate) GenerateTaskMarker() {}
 
 func (flx *FluxPro11UltraFinetunedGenerate) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/flux-pro-1.1-ultra-finetuned", baseURL)

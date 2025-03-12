@@ -2,6 +2,7 @@ package bfl
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -92,15 +93,16 @@ type AsyncTask interface {
 	GetActionURL(baseURL string) string
 }
 
-func (c *Client) AsyncRequest(url string, inputs AsyncTask) (*AsyncResponse, error) {
+func (c *Client) AsyncRequest(ctx context.Context, task AsyncTask) (*AsyncResponse, error) {
 	if c.Key == "" {
 		return nil, fmt.Errorf("API key is not set")
 	}
-	data, err := json.Marshal(inputs)
+	url := task.GetActionURL(c.BaseURL)
+	data, err := json.Marshal(task)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -134,9 +136,13 @@ func (c *Client) AsyncRequest(url string, inputs AsyncTask) (*AsyncResponse, err
 	}
 }
 
-func GetResult[T Result, D Details](client *Client, taskID string) (*ResultResponse[T, D], error) {
-	url := fmt.Sprintf("%s/v1/get_result?id=%s", client.BaseURL, taskID)
-	res, err := http.Get(url)
+func GetResult[T Result, D Details](ctx context.Context, c *Client, taskID string) (*ResultResponse[T, D], error) {
+	url := fmt.Sprintf("%s/v1/get_result?id=%s", c.BaseURL, taskID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -165,11 +171,15 @@ func GetResult[T Result, D Details](client *Client, taskID string) (*ResultRespo
 }
 
 // Poll the BFL API for the result of an async task every second.
-func Poll[T Result, D Details](client *Client, ar *AsyncResponse, verbose bool) (*ResultResponse[T, D], error) {
+func Poll[T Result, D Details](ctx context.Context, c *Client, ar *AsyncResponse, verbose bool) (*ResultResponse[T, D], error) {
 	sleepTimeSeconds := 1
 	attempts := 0
 	for {
-		res, err := http.Get(ar.PollingURL)
+		req, err := http.NewRequestWithContext(ctx, "GET", ar.PollingURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return nil, err
 		}
@@ -197,12 +207,16 @@ func Poll[T Result, D Details](client *Client, ar *AsyncResponse, verbose bool) 
 		default:
 			return nil, fmt.Errorf("status code: %d, body: %s", res.StatusCode, string(body))
 		}
-		if verbose {
-			if attempts%10 == 0 {
-				fmt.Printf("Polling for result... (Wait time: %d seconds)\n", sleepTimeSeconds*attempts)
+		select {
+		case <-time.After(time.Duration(sleepTimeSeconds) * time.Second):
+			attempts++
+			if verbose {
+				if attempts%10 == 0 {
+					fmt.Printf("Polling for result... (Wait time: %d seconds)\n", sleepTimeSeconds*attempts)
+				}
 			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
-		time.Sleep(time.Duration(sleepTimeSeconds) * time.Second)
-		attempts++
 	}
 }

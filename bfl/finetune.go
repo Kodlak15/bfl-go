@@ -1,6 +1,7 @@
 package bfl
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -34,6 +35,29 @@ const (
 	LoraRank16 LoraRank = 16
 	LoraRank32 LoraRank = 32
 )
+
+// TODO: unimplemented
+type FinetuneResult struct{}
+
+// TODO: unimplemented
+type FinetuneDetails struct{}
+
+type FinetuneTask interface {
+	AsyncTask
+	FinetuneTaskMarker()
+}
+
+func Finetune(ctx context.Context, c *Client, task FinetuneTask) (*FinetuneResult, error) {
+	ar, err := c.AsyncRequest(ctx, task)
+	if err != nil {
+		return nil, err
+	}
+	result, err := Poll[*FinetuneResult, *FinetuneDetails](ctx, c, ar, true)
+	if err != nil {
+		return nil, err
+	}
+	return result.Result, nil
+}
 
 // Task parameters for finetuning a flux model through the BFL API.
 type FluxFinetune struct {
@@ -71,11 +95,7 @@ type FluxFinetune struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
-// TODO: unimplemented
-type FinetuneResult struct{}
-
-// TODO: unimplemented
-type FinetuneDetails struct{}
+func (flx *FluxFinetune) FinetuneTaskMarker() {}
 
 func (f *FluxFinetune) GetActionURL(baseURL string) string {
 	return fmt.Sprintf("%s/v1/finetune", baseURL)

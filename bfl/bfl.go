@@ -117,12 +117,12 @@ func (c *Client) AsyncRequest(url string, inputs AsyncTask) (*AsyncResponse, err
 	}
 	switch res.StatusCode {
 	case 200:
-		var asyncResponse AsyncResponse
-		err = json.Unmarshal(body, &asyncResponse)
+		var ar AsyncResponse
+		err = json.Unmarshal(body, &ar)
 		if err != nil {
 			return nil, err
 		}
-		return &asyncResponse, nil
+		return &ar, nil
 	case 422:
 		var httpValidationError HTTPValidationError
 		if err = json.Unmarshal(body, &httpValidationError); err != nil {

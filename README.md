@@ -1,1 +1,1 @@
-This is a Go client library for interacting with the Black Forest Labs API. Consider this (very) alpha quality for the time being. 
+This is an unofficial Go client library for working with the Black Forest Labs API. The API itself is in beta and is subject to change, and I put this together to experiment with the API for personal projects. I would be hesitant to rely on this project for anything beyond that for the time being. 
